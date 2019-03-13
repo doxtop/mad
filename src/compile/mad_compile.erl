@@ -14,6 +14,7 @@ compile(Params) ->
                 {ok,_} -> mad_compile:'compile-apps'(Cwd, ConfigFile, Conf) end end.
 
 deps(_, _, _, []) -> {ok,deps};
+deps(Cwd, Conf, ConfigFile, [{Name,_,_,[raw]}|T]) -> put(Name, compiled), deps(Cwd, Conf, ConfigFile, T);
 deps(Cwd, Conf, ConfigFile, [H|T]) ->
     {Name, _} = mad_utils:name_and_repo(H),
     Res = case get(Name) == compiled of
