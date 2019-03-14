@@ -47,7 +47,8 @@ dep(Cwd, _Conf, ConfigFile, Name) ->
     AllFiles  = files(SrcDir,".yrl") ++
                 files(SrcDir,".xrl") ++
                 files(SrcDir,".peg") ++
-                files(SrcDir,".erl"),
+                files(SrcDir,".erl") ++
+                files(SrcDir,".purs"),
 
     AppSrcFiles = files(SrcDir,".app.src"),
     FirstFiles = [ filename:join([SrcDir,filename:basename(Y)]) || Y <- mad_utils:get_value(erl_first_files, Conf1, []) ],
@@ -57,7 +58,7 @@ dep(Cwd, _Conf, ConfigFile, Name) ->
         [] -> {ok,Name};
         Files ->
             IncDir   = mad_utils:include(DepPath),
-            EbinDir  = mad_utils:ebin(DepPath),
+            EbinDir  = mad_utils:ebin(DepPath),            
             LibDirs  = mad_utils:get_value(lib_dirs, Conf, []),
             Includes = lists:flatten([
                        [{i,filename:join([DepPath,L,D,include])} || D <- mad_utils:raw_deps(Deps) ]
@@ -67,11 +68,10 @@ dep(Cwd, _Conf, ConfigFile, Name) ->
             code:replace_path(Name,EbinDir),
             code:add_path(EbinDir),
 
-            PortStatus  = lists:any(fun(X)->X end,mad_port:compile(DepPath,Conf1)),
-            Opts        = mad_utils:get_value(erl_opts, Conf1, []),
+            PortStatus  = lists:any(fun(X)->X end,mad_port:compile(DepPath,Conf1)),            
             DTLStatus   = mad_dtl:compile(DepPath,Conf1),
             FilesStatus = compile_files(FirstFiles++lists:sort(Files++PrivFiles)++AppSrcFiles,
-                                        IncDir, EbinDir, Opts,Includes),
+                                        IncDir, EbinDir, Conf1, Includes),
 
             put(Name, compiled),
             case (DepsRes orelse FilesStatus orelse DTLStatus orelse PortStatus) of
@@ -79,10 +79,10 @@ dep(Cwd, _Conf, ConfigFile, Name) ->
                  false -> {ok,Name} end end end.
 
 compile_files([],_,_,_,_) -> false;
-compile_files([File|Files],Inc,Bin,Opt,Deps) ->
-    case (module(filetype(File))):compile(File,Inc,Bin,Opt,Deps) of
+compile_files([File|Files],Inc,Bin,Conf,Deps) ->
+    case (module(filetype(File))):compile(File,Inc,Bin,Conf,Deps) of
          true -> io:format("Broken Compilation in ~p~n",[File]), true;
-         false -> compile_files(Files,Inc,Bin,Opt,Deps);
+         false -> compile_files(Files,Inc,Bin,Conf,Deps);
          X -> mad:info("Unknown Error: ~p~n",[{X,File}]), true end.
 
 module("erl")      -> mad_erl;
@@ -92,6 +92,7 @@ module("yrl")      -> mad_yecc;
 module("peg")      -> mad_peg;
 module("xrl")      -> mad_leex;
 module("app.src")  -> mad_app;
+module("purs")     -> mad_purs;
 module(_)          -> mad_none.
 
 filetype(Path) -> string:join(tl(string:tokens(filename:basename(Path), ".")), ".").
