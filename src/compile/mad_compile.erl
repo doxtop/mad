@@ -53,7 +53,7 @@ dep(Cwd, _Conf, ConfigFile, Name) ->
     AppSrcFiles = files(SrcDir,".app.src"),
     FirstFiles = [ filename:join([SrcDir,filename:basename(Y)]) || Y <- mad_utils:get_value(erl_first_files, Conf1, []) ],
     Files = lists:filter(fun (F) -> lists:member(F, FirstFiles) == false end, AllFiles),
-
+    
     case Files of
         [] -> {ok,Name};
         Files ->
@@ -81,8 +81,9 @@ dep(Cwd, _Conf, ConfigFile, Name) ->
 compile_files([],_,_,_,_) -> false;
 compile_files([File|Files],Inc,Bin,Conf,Deps) ->
     case (module(filetype(File))):compile(File,Inc,Bin,Conf,Deps) of
-         true -> io:format("Broken Compilation in ~p~n",[File]), true;
-         false -> compile_files(Files,Inc,Bin,Conf,Deps);
+        true -> io:format("Broken Compilation in ~p~n",[File]), true;
+        false -> compile_files(Files,Inc,Bin,Conf,Deps);
+        {postpone, _Mod} -> compile_files(Files,Inc,Bin,Conf,File);
          X -> mad:info("Unknown Error: ~p~n",[{X,File}]), true end.
 
 module("erl")      -> mad_erl;
