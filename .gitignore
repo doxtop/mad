@@ -9,3 +9,4 @@ deps
 erlang.log.1
 run_erl.log
 rebar3
+psbin
