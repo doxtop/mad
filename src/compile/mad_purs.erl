@@ -30,12 +30,17 @@ compile(File,_Inc,Bin,Conf,Def) ->
                 end;
             {_,0,_R} -> false; % nothing to compile
             {_,_,R} ->
-                mad:info("compilation error: ~p~n", [R]),
-                case binary:matches(R, [<<"Module ">>,<<" was not found">>], []) of % scope can be splited errors
+                case binary:matches(R, [<<"Module ">>,<<" was not found">>], []) of
                     [{S1,L1},{S2,_}|_] ->
                         Mod = binary:part(R,S1+L1,S2-S1-L1),
                         {postpone, Mod};
-                    _ -> true
+                    _ -> mad:info("Error ~s~n",[format(R)]), true
                 end
         end;
         {_,_,R} -> mad:info("Compiler not installed: ~p~n", [R]), true end.
+
+format(E) -> 
+    case binary:matches(E, [<<"Error found:">>, <<" unable to parse module: ">>], []) of 
+        [{S1,L1}] -> binary:part(E,S1+L1,byte_size(E)-L1);
+        Pe -> Pe
+    end.

@@ -2,5 +2,5 @@
  [{description, "MAD Manage Dependencies"},
   {vsn, "4.11"},
   {registered, []},
-  {applications, [kernel,stdlib,inets]},
+  {applications, [kernel,stdlib,inets,fs]},
   {env, []}]}.

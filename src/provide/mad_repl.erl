@@ -128,6 +128,7 @@ sh(Params) ->
                        rewrite_leaders(O,whereis(user)) end,
     maybe_reset_logger(Logger),
     load_apps(Params,Config,[]),
+    active_sup:start_link(),
     case Params of
         ["applist"] -> skip;
         _ ->  timer:sleep(infinity) end end.
